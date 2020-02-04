@@ -7,18 +7,18 @@ os.path.abspath("/Stock_Data/TSLA.csv")
 TSLA = Asset("Tesla",
              "stock",
              os.path.abspath("Stock_Data/TSLA.csv"),
-             30
+             3
              )
 GOOG = Asset("Alphabet",
              "stock",
              os.path.abspath("Stock_Data/GOOG.csv"),
-             20
+             30
              )
 
 #example
 portf1 = Portfolio(1,30000,0,0,[TSLA,GOOG])
-value_at_risk(portf1)
-
+VaR_value,VaR_perc =value_at_risk(portf1,.95,1)
+print(VaR_value,VaR_perc)
 
 
 
