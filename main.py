@@ -1,24 +1,29 @@
 #imports
 from Library.RiskCalc import *
+from Library.ReadUniverse import *
 import os
 
 #example
-os.path.abspath("/Stock_Data/TSLA.csv")
-TSLA = Asset("Tesla",
-             "stock",
-             os.path.abspath("Stock_Data/TSLA.csv"),
-             3
-             )
-GOOG = Asset("Alphabet",
-             "stock",
-             os.path.abspath("Stock_Data/GOOG.csv"),
-             30
-             )
+# os.path.abspath("/Stock_Data/TSLA.csv")
+# TSLA = Asset('TSLA',
+#             "Tesla",
+#              "stock",
+#              os.path.abspath("Stock_Data/TSLA.csv"),
+#              3
+#              )
+# GOOG = Asset('GOOG',
+#             "Alphabet",
+#              "stock",
+#              os.path.abspath("Stock_Data/GOOG.csv"),
+#              30
+#              )
 
 #example
-portf1 = Portfolio(1,30000,0,0,[TSLA,GOOG])
-VaR_value,VaR_perc =value_at_risk(portf1,.95,1)
-print(VaR_value,VaR_perc)
+# portf1 = Portfolio(1,30000,0,0,[TSLA,GOOG])
+# VaR_value,VaR_perc =value_at_risk(portf1,.95,1)
+# print(VaR_value,VaR_perc)
 
+#example
+universe = ReadUniverse()
 
-
+print(universe.universe_set)
