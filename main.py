@@ -1,6 +1,7 @@
 #imports
 from Library.RiskCalc import *
 from Library.ReadUniverse import *
+from Library.FilterUniverse import *
 import os
 
 #example
@@ -25,5 +26,7 @@ import os
 
 #example
 universe = ReadUniverse()
-
-print(universe.universe_set)
+print(universe.count)
+filtered_universe = filter_universe(universe)
+print(filtered_universe.universe_set)
+print(filtered_universe.count)
