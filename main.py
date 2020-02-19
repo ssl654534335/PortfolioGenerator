@@ -25,5 +25,4 @@ print(universe.count)
 filtered_universe = filter_universe(universe)
 print(filtered_universe.universe_set)
 portf = generate_portfolio(filtered_universe, 10000, 1)
-
 print(portf)

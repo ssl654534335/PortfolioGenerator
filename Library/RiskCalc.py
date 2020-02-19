@@ -155,15 +155,15 @@ def gen_pos_returns(weights: [float], returns: pd.DataFrame):
 
 # returns fitness score for a particular individual given its
 # weights(chromosome) and universe for which does weights are 1-1 with.
-def gen_fitness_value(weights: [float], universe: [Asset]):
+def gen_fitness_value(weights: [float], universe_data: pd.DataFrame):
 
     # universe data
     # speeds up if outside function and pass as parameter instead
     # global variable?
-    historical_data= gen_universe_hist_data(universe,"Adj. Close")
+    #historical_data= gen_universe_hist_data(universe,"Adj. Close")
 
     # portfolio returns based on weights
-    returns = historical_data.pct_change()
+    returns = universe_data.pct_change()
     total_returns = (returns.dropna()) * weights
     total_returns = total_returns.apply(np.sum, axis=1).sort_values()
 
@@ -171,5 +171,4 @@ def gen_fitness_value(weights: [float], universe: [Asset]):
     VaR = gen_value_at_risk(weights,returns,.95)
     entropy = gen_entropy(weights,total_returns)
     prob_pos_returns = gen_pos_returns(weights,returns)
-    #print(VaR,-entropy,prob_pos_returns)
     return VaR*(-entropy)+(-entropy)+((-entropy)*prob_pos_returns)

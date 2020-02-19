@@ -14,13 +14,14 @@ class OptPortfolio(Problem):
     def __init__(self, universe: Universe, buying_power: float):
         super(OptPortfolio, self).__init__(universe.count,1,1)
         self.universe = universe
+        self.universe_historical_data = gen_universe_hist_data(universe.universe_set, "Adj. Close")
         self.buying_power = buying_power
         self.types[:] = Real(0,1)
         self.constraints[:] = "<=0"
         self.directions[:] = Problem.MAXIMIZE
 
     def evaluate(self, solution):
-        solution.objectives[:] = gen_fitness_value(solution.variables, self.universe.universe_set)
+        solution.objectives[:] = gen_fitness_value(solution.variables, self.universe_historical_data)
         solution.constraints[0] = sum(solution.variables) - 1
         #solution.constraints[1] = calc_total_value(self.universe, solution.variables) - self.buying_power        
 
