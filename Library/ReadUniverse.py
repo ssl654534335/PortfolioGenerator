@@ -19,14 +19,15 @@ def ReadUniverse():
         name = universe_set['Name'][i]
         path = os.path.abspath('./Stock_Data')+'/'+ticker+'.csv'
         if os.path.exists(path):
-            asset = Asset(ticker,name,'stock',path)
+            df = pd.read_csv(path)
+            asset = Asset(ticker,name,'stock',path,df['Adj. Close'].values[-1])
             asset_list.append(asset)
             count += 1
             continue
         try:
             df = quandl.get('WIKI/'+ticker,start_date=start,end_date=end,api_key=API_KEY)
             df.to_csv(path)
-            asset = Asset(ticker,name,'stock',path)
+            asset = Asset(ticker,name,'stock',path,df['Adj. Close'].values[-1])
             asset_list.append(asset)
             count += 1
         except quandl.errors.quandl_error.NotFoundError:
