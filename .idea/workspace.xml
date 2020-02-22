@@ -3,7 +3,6 @@
   <component name="ChangeListManager">
     <list default="true" id="dd97f1f4-4493-47df-be79-3982003cfd74" name="Default Changelist" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Library/GeneratePortfolio.py" beforeDir="false" afterPath="$PROJECT_DIR$/Library/GeneratePortfolio.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/Library/RiskCalc.py" beforeDir="false" afterPath="$PROJECT_DIR$/Library/RiskCalc.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -34,7 +33,7 @@
   <component name="PropertiesComponent">
     <property name="RunOnceActivity.ShowReadmeOnStart" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../Personal Projects/stock" />
     <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RecentsManager">
@@ -100,26 +99,26 @@
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="409" y="4" key="#main/0.0.1366.728@0.0.1366.728" timestamp="1580752475432" />
-    <state x="624" y="141" key="FileChooserDialogImpl" timestamp="1580754367894">
+    <state x="624" y="141" key="FileChooserDialogImpl" timestamp="1582146831625">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state x="624" y="141" key="FileChooserDialogImpl/0.0.1366.728@0.0.1366.728" timestamp="1580754367894" />
-    <state width="1344" height="203" key="GridCell.Tab.0.bottom" timestamp="1582101254449">
+    <state x="624" y="141" key="FileChooserDialogImpl/0.0.1366.728@0.0.1366.728" timestamp="1582146831625" />
+    <state width="1344" height="156" key="GridCell.Tab.0.bottom" timestamp="1582370268745">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1344" height="203" key="GridCell.Tab.0.bottom/0.0.1366.728@0.0.1366.728" timestamp="1582101254449" />
-    <state width="1344" height="203" key="GridCell.Tab.0.center" timestamp="1582101254449">
+    <state width="1344" height="156" key="GridCell.Tab.0.bottom/0.0.1366.728@0.0.1366.728" timestamp="1582370268745" />
+    <state width="1344" height="156" key="GridCell.Tab.0.center" timestamp="1582370268745">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1344" height="203" key="GridCell.Tab.0.center/0.0.1366.728@0.0.1366.728" timestamp="1582101254449" />
-    <state width="1344" height="203" key="GridCell.Tab.0.left" timestamp="1582101254449">
+    <state width="1344" height="156" key="GridCell.Tab.0.center/0.0.1366.728@0.0.1366.728" timestamp="1582370268745" />
+    <state width="1344" height="156" key="GridCell.Tab.0.left" timestamp="1582370268745">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1344" height="203" key="GridCell.Tab.0.left/0.0.1366.728@0.0.1366.728" timestamp="1582101254449" />
-    <state width="1344" height="203" key="GridCell.Tab.0.right" timestamp="1582101254449">
+    <state width="1344" height="156" key="GridCell.Tab.0.left/0.0.1366.728@0.0.1366.728" timestamp="1582370268745" />
+    <state width="1344" height="156" key="GridCell.Tab.0.right" timestamp="1582370268745">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state width="1344" height="203" key="GridCell.Tab.0.right/0.0.1366.728@0.0.1366.728" timestamp="1582101254449" />
+    <state width="1344" height="156" key="GridCell.Tab.0.right/0.0.1366.728@0.0.1366.728" timestamp="1582370268745" />
     <state width="1308" height="194" key="GridCell.Tab.1.bottom" timestamp="1581912247840">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
@@ -140,10 +139,10 @@
       <screen x="0" y="0" width="1366" height="728" />
     </state>
     <state x="186" y="0" key="SettingsEditor/0.0.1366.728@0.0.1366.728" timestamp="1580754374756" />
-    <state x="390" y="190" key="com.intellij.ide.util.TipDialog" timestamp="1581916853542">
+    <state x="390" y="190" key="com.intellij.ide.util.TipDialog" timestamp="1582235295777">
       <screen x="0" y="0" width="1366" height="728" />
     </state>
-    <state x="390" y="190" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1581916853542" />
+    <state x="390" y="190" key="com.intellij.ide.util.TipDialog/0.0.1366.728@0.0.1366.728" timestamp="1582235295777" />
     <state x="349" y="0" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1581824156951">
       <screen x="0" y="0" width="1366" height="728" />
     </state>

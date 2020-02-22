@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from scipy.special import erf
 from scipy.stats import norm
 from Library.DataClass import *
 import math
@@ -104,71 +105,109 @@ def gen_universe_hist_data(universe:[Asset], price_indicator:str):
 # weight array and universe must be 1 to 1
 # confidence level .9,.95,.99
 # reruns dataframe is a joint table of returns for all assets in the universe
-def gen_value_at_risk(weights: [float], returns: pd.DataFrame, conf_level: float):
+def gen_cond_var(weights: [float], returns: pd.DataFrame, conf_level: float):
 
-    # VaR Historical (another way to calculate VaR)
-    # data is total_returns
+    # VaR Historical totlat returns
     #indx = round((1-conf_level)*len(data.index)) # Percentile calculation
     #return data.iloc[indx]
 
-    # VaR parametric
+    ###  CVaR parametric  ###
     w = np.array(weights)
     mean = returns.mean().dot(weights)
     std = np.sqrt(w.T.dot(returns.cov()).dot(weights))
-
     # parametric calculations
     # there's a (1-conf_level)% probability that we loss at least
-    # x percent of our total portfolio value in a day
-    x = norm.ppf((1 - conf_level), mean, std)
+    # var percent of our total portfolio value in a day
+    var = norm.ppf((1 - conf_level), mean, std)
 
-    # returns Value at Risk as a value and as a percentage of total investment
-    return round(x, 4)
+    # equation for expected value given var of normal distribution with known mean and std
+    cvar = .5*mean*erf((var-mean)/(math.sqrt(2)*std))- std*math.exp(-(var-mean)**2/(2*std**2))/math.sqrt(2*math.pi) +.5*mean
+    return cvar
 
 
-# This function returns the Renyi entropy given weights and joint table of returns
+# This function returns the Renyi or Shannon entropy given weights and joint table of returns
 # for all assets in the universe (data).
 # uses square root rule for determining number of subintervals
-def gen_entropy(weights: [float], data: pd.DataFrame):
+def gen_entropy(weights: [float], returns: pd.DataFrame, type: str):
+    # total returns
+    returns_weighted = (returns.dropna()) * weights
+    data = returns_weighted.apply(np.sum, axis=1).sort_values()
+
+    #entropy conditions
     n = data.shape[0]
-    k = int(round(np.sqrt(n)))
+    k = int(round(np.sqrt(n))) # square root choice
     min = round(data.iloc[0],4)
-    bin_width = round((data.iloc[-1] - data.iloc[0])/k,4)
+    bin_width = (data.iloc[-1] - data.iloc[0])/k
     summation = 0
 
-    for i in range(1,k):
-        seriesObj = data.apply(lambda x: True if (min + bin_width * i) >= x > (min + bin_width * (i - 1)) else False)
-        numOfRows = len(seriesObj[seriesObj == True].index)
-        summation = summation + bin_width*(numOfRows/(n*bin_width))**2 # renyi calculation
-    return -round(math.log(summation,2),4) # renyi calculation
+    if type is 'Renyi':
+        for i in range(1,k):
+            series = data.apply(lambda x: True if (min + bin_width * i) >= x > (min + bin_width * (i - 1)) else False)
+            items_in_bin = len(series[series == True].index)
+            summation = summation + bin_width*((items_in_bin/(n*bin_width))**2) # renyi formula
 
+        entropy = math.log(summation,2) # renyi formula
+        return entropy
+
+    elif type is 'Shannon':
+        for i in range(0, k+1):
+            series = data.apply(lambda x: True if (min + bin_width * (i+1)) > x >= (min + bin_width * i) else False)
+            items_in_bin = len(series[series == True].index)
+            if (items_in_bin > 0): #can ignore cases when items_in_bin = 0
+                summation = summation + items_in_bin*math.log(items_in_bin / (n * bin_width),2) # shannon formula
+
+        entropy = (1/n)*summation # shannon formula
+        return entropy
+
+    else:
+        return 'error'
 
 # returns the probability that our portfolio daily return is 0% or greater.
-# uses normal parametric approximation
-def gen_pos_returns(weights: [float], returns: pd.DataFrame):
-    w = np.array(weights)
-    mean = returns.mean().dot(weights)
-    std = np.sqrt(w.T.dot(returns.cov()).dot(weights))
+# uses normal parametric approximation or historical data
+def gen_pos_returns(weights: [float], returns: pd.DataFrame, type: str):
+    if type is 'parametric':
+        w = np.array(weights)
+        mean = returns.mean().dot(weights)
+        std = np.sqrt(w.T.dot(returns.cov()).dot(weights))
 
-    # parametric calculations
-    return 1 - norm.cdf(0, mean, std)
+        # parametric calculations
+        return 1 - norm.cdf(0, mean, std)
+
+    elif type is 'historical':
+        returns_weighted = (returns.dropna()) * weights
+        total_returns = returns_weighted.apply(np.sum,axis=1).sort_values()
+        array = np.asarray(total_returns)
+        idx = (np.abs(array)).argmin() # index of closest return = 0%
+        prob = 1 - (idx)/len(array)  # 1 - probability return is less than 0%
+        return prob
+
+    else:
+        return 'error'
 
 
 # returns fitness score for a particular individual given its
 # weights(chromosome) and universe for which does weights are 1-1 with.
 def gen_fitness_value(weights: [float], universe_data: pd.DataFrame):
 
-    # universe data
-    # speeds up if outside function and pass as parameter instead
-    # global variable?
-    #historical_data= gen_universe_hist_data(universe,"Adj. Close")
-
-    # portfolio returns based on weights
+    # portfolio returns
     returns = universe_data.pct_change()
-    total_returns = (returns.dropna()) * weights
-    total_returns = total_returns.apply(np.sum, axis=1).sort_values()
 
-    # total_returns have been sorted in ascending order
-    VaR = gen_value_at_risk(weights,returns,.95)
-    entropy = gen_entropy(weights,total_returns)
-    prob_pos_returns = gen_pos_returns(weights,returns)
-    return VaR*(-entropy)+(-entropy)+((-entropy)*prob_pos_returns)
+    # CVaR
+    VaR = gen_cond_var(weights,returns,.95)
+
+    # entropy
+    n = returns.nunique().sum() # number of unique returns all the universe
+    p_x = 1/((returns.max().max() - returns.min().min())+1) # discrete probability of a uniform distribution for universe
+    # discrete shannon entropy is maximized when distribution is uniform, i.e maximum entropy in the universe
+    # discrete renyi entropy is maximized when distribution is uniform, i.e maximum entropy in the universe
+    max_entropy_shannon = -n*p_x*math.log(p_x,2) # discrete shannon equation for uniform distribution
+    max_entropy_renyi = math.log(n*(p_x**2),2) # discrete renyi entropy equation for uniform distribution
+    entropy = gen_entropy(weights,returns,'Renyi')
+
+    # returns
+    prob_pos_returns = gen_pos_returns(weights,returns, 'historical')
+
+    # all objectives are unitless and are percentages from 0 to 1. Therefore they have about equal weight in
+    # the fitness function. theoretical max fitness score = 0 + 1 + 1 = 2
+    fitness_score = VaR + entropy/max_entropy_renyi + prob_pos_returns
+    return round(fitness_score,5)
