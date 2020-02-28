@@ -5,82 +5,18 @@ from scipy.stats import norm
 from Library.DataClass import *
 import math
 
-
-# obtain data for each asset and return the historical data and weight of each asset along with the portfolio's
-# current value (investment)
-def portfolio_get_data(portf: Portfolio):
-    historical_data = pd.DataFrame()
-    weights = []
-    investment = 0
-
-    # Empty Portfolio
-    if len(portf.assets) == 0:
-        return 0
-
-    for asset in portf.assets:
-        # get data and reformat
-        asset_data = pd.read_csv(asset.price_history_file).drop(columns=['Open', 'Low', 'High', 'Close', 'Volume'])
-        asset_data = asset_data.rename(columns={"Adj Close": asset.name})
-        asset_data = asset_data.set_index('Date')
-
-        # join new asset data to overall data table
-        if historical_data.empty:
-            historical_data = asset_data
-        elif len(historical_data) >= len(asset_data):
-            historical_data = historical_data.join(asset_data)
-        else:
-            historical_data = asset_data.join(historical_data)
-
-        # store current value of each asset and calulate total investment
-        current_asset_price = asset_data.iloc[-1][
-                                  0] * asset.shares_owned  # if csv is ordered in ascending order of dates
-        weights.append(current_asset_price)
-        investment = investment + current_asset_price  # TODO case when 0 shares owned
-
-    # calculate weights of each asset in portfolio
-    weights = weights / investment
-    weights = np.array(weights).round(3)
-
-    return historical_data, weights, round(investment, 2)
-
-# confidence level .9,.95,.99 where horizon is number of days Value at risk which to be calculated for
-def value_at_risk(portf: Portfolio, conf_level: float, horizon: int):
-    historical_data, weights, investment = portfolio_get_data(portf)
-
-    # portfolio estimated parameters calculations
-    returns = historical_data.pct_change()
-    portf_mean = returns.mean().dot(weights)
-    portf_std = np.sqrt(weights.T.dot(returns.cov()).dot(weights))
-
-    # parametric calculations
-    mean_investment = (1+portf_mean)*investment
-    std_investment = investment * portf_std
-    cut = norm.ppf((1-conf_level), mean_investment, std_investment)
-
-    # Value at risk
-    vr = round((investment - cut)*np.sqrt(horizon),2)
-    # returns Value at Risk as a value and as a percentage of total investment
-    return vr,round(vr/investment,2)*100
-
-
-
-
 ################ For genetic algorithm #################################
 
 # This function returns a pandas dataframe of all the historical prices of all the
-# assets in the universe. price_indicator is a string that indicates what column in
-# the orginal .csv file we want to use for calculating returns. i.e 'open','close',
-# 'adj. close', etc.
+# assets in the universe joined in one table
+# universe: list of assets in universe
+# price_indicator: indicates what column in the orginal .csv file to keep for calculating returns.
+# i.e 'open','close', or 'adj. close', etc.
 def gen_universe_hist_data(universe:[Asset], price_indicator:str):
     historical_data = pd.DataFrame()
 
-    # Empty chromosomes
-    if len(universe) == 0:
-        print("error: empty list")
-        return 0
-
     for asset in universe:
-        # get data and reformat
+        # get data from csv and reformat dataframe
         asset_data = pd.read_csv(asset.price_history_file)
         col = list(asset_data.columns)
         col.remove(price_indicator)
@@ -93,121 +29,119 @@ def gen_universe_hist_data(universe:[Asset], price_indicator:str):
         # join new asset data to overall data table
         if historical_data.empty:
             historical_data = asset_data
-        elif len(historical_data) <= len(asset_data):
-            historical_data = historical_data.join(asset_data)
         else:
             historical_data = asset_data.join(historical_data)
 
     return historical_data
 
+# This function returns historical value at risk
+# returns: a single column dataframe holding a list of returns
+def gen_var(returns: pd.DataFrame):
+    # confidence level for calculating VaR
+    # .95 is standard but .99 and .975 can also be used
+    conf_level = .95
 
-# returns value at risk for genetic algorithm
-# weight array and universe must be 1 to 1
-# confidence level .9,.95,.99
-# reruns dataframe is a joint table of returns for all assets in the universe
-def gen_cond_var(weights: [float], returns: pd.DataFrame, conf_level: float):
+    # portf_return needs to be sorted in ascending order for VaR Calc
+    returns = returns.sort_values()
 
-    # VaR Historical totlat returns
-    #indx = round((1-conf_level)*len(data.index)) # Percentile calculation
-    #return data.iloc[indx]
+    # VaR Historical total returns
+    tail = 1-conf_level  # the percentile of returns we are cutting off from our distribution
+    indx = round((tail*len(returns.index)))  # indx is the index in our portfolio returns where we cut off the tail
+    return returns.iloc[indx]  # returns value of our cutoff point aka stop loss
 
-    ###  CVaR parametric  ###
-    w = np.array(weights)
-    mean = returns.mean().dot(weights)
-    std = np.sqrt(w.T.dot(returns.cov()).dot(weights))
-    # parametric calculations
-    # there's a (1-conf_level)% probability that we loss at least
-    # var percent of our total portfolio value in a day
-    var = norm.ppf((1 - conf_level), mean, std)
+# max entropy possible for any chromosome is the entropy of the universe as a uniform distribution
+# since the chromosome is a subset of the universe
+# universe: a dataframe of the universe's total returns
+def gen_max_entopy(universe: pd.DataFrame):
+    n = universe.nunique()  # number of unique returns of all the universe
 
-    # equation for expected value given var of normal distribution with known mean and std
-    cvar = .5*mean*erf((var-mean)/(math.sqrt(2)*std))- std*math.exp(-(var-mean)**2/(2*std**2))/math.sqrt(2*math.pi) +.5*mean
-    return cvar
+    # discrete probability of a discrete uniform distribution maximizes shannon entropy
+    # so need to define universe as uniform distribution
+    p_x = 1 / ((universe.max().max() - universe.min().min()) + 1)
 
+    # discrete shannon equation for discrete uniform distribution
+    max_entropy_shannon = -n * p_x * math.log(p_x, 2)
 
-# This function returns the Renyi or Shannon entropy given weights and joint table of returns
-# for all assets in the universe (data).
+    return max_entropy_shannon
+
+# This function returns the Shannon entropy
 # uses square root rule for determining number of subintervals
-def gen_entropy(weights: [float], returns: pd.DataFrame, type: str):
-    # total returns
-    returns_weighted = (returns.dropna()) * weights
-    data = returns_weighted.apply(np.sum, axis=1).sort_values()
+# returns: a single column dataframe holding a list of returns
+# cutoff_value: the cutoff point of our distribution used to reduce risk
+def gen_entropy(returns: pd.DataFrame, cutoff_value: float):
+    # sort returns in ascending order to ease calculations
+    returns = returns.sort_values()
 
-    #entropy conditions
-    n = data.shape[0]
-    k = int(round(np.sqrt(n))) # square root choice
-    min = round(data.iloc[0],4)
-    bin_width = (data.iloc[-1] - data.iloc[0])/k
+    # need to cut off tail of our returns distribution based on our cutoff value before calculating entropy
+    cutoff_indx = 0
+    for x in range(0,returns.shape[0]):
+        if returns[x] <= cutoff_value:
+            cutoff_indx = cutoff_indx+1
+        else:
+            break
+    returns = returns.iloc[cutoff_indx:]
+
+    # entropy conditions
+    n = returns.shape[0] # number of returns in distribution
+    num_bin = int(round(np.sqrt(n))) # square root choice for how many bins to split all returns into
+    bin_width = (returns.iloc[-1] - returns.iloc[0]) / num_bin
+    min = round(returns.iloc[0],4)
     summation = 0
 
-    if type is 'Renyi':
-        for i in range(1,k):
-            series = data.apply(lambda x: True if (min + bin_width * i) >= x > (min + bin_width * (i - 1)) else False)
-            items_in_bin = len(series[series == True].index)
-            summation = summation + bin_width*((items_in_bin/(n*bin_width))**2) # renyi formula
+    # entropy calculation
+    for i in range(0, num_bin+1):
+        # mark all returns in current bin
+        series = returns.apply(lambda x: True if (min + bin_width * (i+1)) > x >= (min + bin_width * i) else False)
+        # count all returns marked
+        items_in_bin = len(series[series == True].index)
 
-        entropy = math.log(summation,2) # renyi formula
-        return entropy
+        if (items_in_bin > 0): #to ignore cases when items_in_bin = 0
+            summation = summation + items_in_bin*math.log(items_in_bin / (n * bin_width),2) # shannon formula
 
-    elif type is 'Shannon':
-        for i in range(0, k+1):
-            series = data.apply(lambda x: True if (min + bin_width * (i+1)) > x >= (min + bin_width * i) else False)
-            items_in_bin = len(series[series == True].index)
-            if (items_in_bin > 0): #can ignore cases when items_in_bin = 0
-                summation = summation + items_in_bin*math.log(items_in_bin / (n * bin_width),2) # shannon formula
+    entropy = (1/n)*summation # shannon formula
+    return entropy
 
-        entropy = (1/n)*summation # shannon formula
-        return entropy
+# This function returns historical probability that our portfolio daily returns are positive.
+def gen_pos_returns(returns: pd.DataFrame):
+    returns = returns.sort_values()
+    array = np.asarray(returns)
+    idx = (np.abs(array)).argmin() # index of closest return = 0%
+    prob = 1 - (idx)/len(array)  # 1 - probability return is less than 0% = probability returns are greater than 0%
+    return prob
 
-    else:
-        return 'error'
+# this function returns a fitness score for a particular individual given a chromosome
+# and universe that chromosome is from
+def gen_fitness_value(chromosome: [int], universe_data: pd.DataFrame):
 
-# returns the probability that our portfolio daily return is 0% or greater.
-# uses normal parametric approximation or historical data
-def gen_pos_returns(weights: [float], returns: pd.DataFrame, type: str):
-    if type is 'parametric':
-        w = np.array(weights)
-        mean = returns.mean().dot(weights)
-        std = np.sqrt(w.T.dot(returns.cov()).dot(weights))
+    # the total universe returns is the average of asset returns, in an equally weighted portfolio
+    universe_returns = universe_data.pct_change().dropna(how='all')  # drop all dates that have no data of any asset
+    cnt = universe_returns.count(axis='columns')
+    universe_total_returns = universe_returns.apply(np.sum, axis=1) / cnt  # average = sum/#assets
 
-        # parametric calculations
-        return 1 - norm.cdf(0, mean, std)
+    # reduces universe dataframe to a portfolio of assets indicated by the chromosome
+    portf_asset_indicies = np.where(np.array(chromosome) == 1)
+    universe_assets = np.array(universe_data.columns)
+    assets_in_portf = universe_assets[portf_asset_indicies]
+    portf_data = universe_data[assets_in_portf]
 
-    elif type is 'historical':
-        returns_weighted = (returns.dropna()) * weights
-        total_returns = returns_weighted.apply(np.sum,axis=1).sort_values()
-        array = np.asarray(total_returns)
-        idx = (np.abs(array)).argmin() # index of closest return = 0%
-        prob = 1 - (idx)/len(array)  # 1 - probability return is less than 0%
-        return prob
+    # the total portfolio returns is the average of asset returns, in an equally weighted portfolio
+    portf_returns = portf_data.pct_change()
+    portf_returns = portf_returns.dropna(how='all') # drop all dates that have no data of any asset
+    cnt = portf_returns.count(axis='columns')
+    portf_total_returns = portf_returns.apply(np.sum, axis=1)/cnt # average = sum/#assets
 
-    else:
-        return 'error'
-
-
-# returns fitness score for a particular individual given its
-# weights(chromosome) and universe for which does weights are 1-1 with.
-def gen_fitness_value(weights: [float], universe_data: pd.DataFrame):
-
-    # portfolio returns
-    returns = universe_data.pct_change()
-
-    # CVaR
-    VaR = gen_cond_var(weights,returns,.95)
+    # VaR
+    VaR = gen_var(portf_total_returns)
 
     # entropy
-    n = returns.nunique().sum() # number of unique returns all the universe
-    p_x = 1/((returns.max().max() - returns.min().min())+1) # discrete probability of a uniform distribution for universe
-    # discrete shannon entropy is maximized when distribution is uniform, i.e maximum entropy in the universe
-    # discrete renyi entropy is maximized when distribution is uniform, i.e maximum entropy in the universe
-    max_entropy_shannon = -n*p_x*math.log(p_x,2) # discrete shannon equation for uniform distribution
-    max_entropy_renyi = math.log(n*(p_x**2),2) # discrete renyi entropy equation for uniform distribution
-    entropy = gen_entropy(weights,returns,'Renyi')
+    max_entropy = gen_max_entopy(universe_total_returns)
+    portf_entropy = gen_entropy(portf_total_returns, VaR)
+    entropy = portf_entropy/max_entropy
 
     # returns
-    prob_pos_returns = gen_pos_returns(weights,returns, 'historical')
+    prob_pos_returns = gen_pos_returns(portf_total_returns)
 
-    # all objectives are unitless and are percentages from 0 to 1. Therefore they have about equal weight in
-    # the fitness function. theoretical max fitness score = 0 + 1 + 1 = 2
-    fitness_score = VaR + entropy/max_entropy_renyi + prob_pos_returns
+    # all objectives are in range [0,1] so they have equal weight in fitness function
+    # a higher fitness score is more desirable
+    fitness_score = VaR + entropy + prob_pos_returns
     return round(fitness_score,5)
