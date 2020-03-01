@@ -4,6 +4,8 @@ from Library.ReadUniverse import *
 from Library.FilterUniverse import *
 from Library.GeneratePortfolio import generate_portfolio
 from Library.MonteCarloSim import *
+from Library.RabbitMQProducer import *
+from Library.RabbitMQConsumer import *
 import os
 
 #####  sample universe for testing  ######
@@ -32,3 +34,11 @@ import os
 #print(filtered_universe.universe_set)
 #portf = generate_portfolio(filtered_universe, 10000, 1)
 #print(portf)
+
+### for testing RabbitMQ ####
+rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
+sample_portf_msg = UDMPortfolio(1, 101, True, datetime.datetime.today(), 1000, 870.40, .78,['NKTR', 'CSRA', 'AKM', 'MCHP'])
+rabbitmq.publish(sample_portf_msg.to_json())
+
+#server = rabbitMqConsumer('UserDB-PortfGen', "localhost")
+#server.startserver()

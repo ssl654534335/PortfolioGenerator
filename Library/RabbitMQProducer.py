@@ -19,8 +19,3 @@ class rabbitMqProducer():
                       body=msg)
         print("Published Message: {}".format(msg))
         self._connection.close()
-
-if __name__ == "__main__":
-    rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
-    sample_portf_msg = UDMPortfolio(1, 101, True, datetime.datetime.today(), 1000, 870.40, .78,['NKTR', 'CSRA', 'AKM', 'MCHP'])
-    rabbitmq.publish(sample_portf_msg.to_json())

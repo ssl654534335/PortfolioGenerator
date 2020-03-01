@@ -29,8 +29,3 @@ class rabbitMqConsumer():
             on_message_callback=rabbitMqConsumer.callback,
             auto_ack=True)
         self._channel.start_consuming()
-
-
-if __name__ == "__main__":
-    server = rabbitMqConsumer('UserDB-PortfGen', "localhost")
-    server.startserver()
