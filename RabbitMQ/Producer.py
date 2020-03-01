@@ -1,0 +1,26 @@
+import pika
+from Library.DataClass import UDMPortfolio
+import datetime
+
+class rabbitMqProducer():
+
+    def __init__(self, queue, host, routing_key, exchange):
+        self.host = host
+        self.queue = queue
+        self.routing_key = routing_key
+        self.exchange = exchange
+        self._connection = pika.BlockingConnection(pika.ConnectionParameters(host=self.host))
+        self._channel = self._connection.channel()
+        self._channel.queue_declare(queue=self.queue)
+
+    def publish(self, msg):
+        self._channel.basic_publish(exchange=self.exchange,
+                      routing_key=self.routing_key,
+                      body=msg)
+        print("Published Message: {}".format(msg))
+        self._connection.close()
+
+if __name__ == "__main__":
+    rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
+    sample_portf_msg = UDMPortfolio(1, 101, True, datetime.datetime.today(), 1000, 870.40, .78,['NKTR', 'CSRA', 'AKM', 'MCHP'])
+    rabbitmq.publish(sample_portf_msg.to_json())

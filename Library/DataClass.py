@@ -1,5 +1,7 @@
 from dataclasses import dataclass
+from dataclasses_json import dataclass_json
 from typing import List
+import datetime
 
 @dataclass()
 class Asset():
@@ -23,3 +25,15 @@ class Portfolio():
     # cond_value_at_risk: float # a risk calculation that I will later implement
     assets: List[Asset] # a list of stocks in this portfolio
     asset_alloc: dict
+
+@dataclass_json()
+@dataclass()
+class UDMPortfolio():
+    Id: int
+    OwnerId: int
+    Active: bool
+    Generated: datetime.datetime
+    InitialValue: float
+    StopValue: float
+    DesiredRisk: float
+    Holdings: List[str]
