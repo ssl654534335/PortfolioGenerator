@@ -28,6 +28,14 @@ class Portfolio():
 
 @dataclass_json()
 @dataclass()
+class UDMHolding():
+    Name: str
+    Abbreviation: str
+    Description: str
+    Quantity: int
+
+@dataclass_json()
+@dataclass()
 class UDMPortfolio():
     Id: int
     OwnerId: int
@@ -36,4 +44,4 @@ class UDMPortfolio():
     InitialValue: float
     StopValue: float
     DesiredRisk: float
-    Holdings: List[str]
+    Holdings: List[UDMHolding]

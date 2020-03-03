@@ -36,9 +36,11 @@ import os
 #print(portf)
 
 ### for testing RabbitMQ ####
-rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
-sample_portf_msg = UDMPortfolio(1, 101, True, datetime.datetime.today(), 1000, 870.40, .78,['NKTR', 'CSRA', 'AKM', 'MCHP'])
-rabbitmq.publish(sample_portf_msg.to_json())
+#rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
+#h1 = UDMHolding('Nektar Therapeutics','NKTR', '',100)
+#h2 = UDMHolding('Microchip Technology','MCHP','', 234)
+#sample_portf_msg = UDMPortfolio(1, 101, True, datetime.datetime.today(), 1000, 870.40, .78,[h1,h2])
+#rabbitmq.publish(sample_portf_msg.to_json())
 
 #server = rabbitMqConsumer('UserDB-PortfGen', "localhost")
 #server.startserver()
