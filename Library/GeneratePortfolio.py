@@ -1,4 +1,4 @@
-from platypus import NSGAII, Problem, Real
+from platypus import NSGAII, Problem, Integer
 from Library.DataClass import *
 from Library.RiskCalc import *
 
@@ -16,29 +16,36 @@ class OptPortfolio(Problem):
         self.universe = universe
         self.universe_historical_data = gen_universe_hist_data(universe.universe_set, "Adj. Close")
         self.buying_power = buying_power
-        self.types[:] = Real(0,1)
-        self.constraints[:] = "<=0"
+        self.typeInt = Integer(0,1)
+        self.types[:] = self.typeInt
+        self.constraints[:] = "==0"
         self.directions[:] = Problem.MAXIMIZE
 
     def evaluate(self, solution):
         solution.objectives[:] = gen_fitness_value(solution.variables, self.universe_historical_data)
-        solution.constraints[0] = sum(solution.variables) - 1
+        solution.constraints[0] = sum(solution.variables) - 10
         #solution.constraints[1] = calc_total_value(self.universe, solution.variables) - self.buying_power        
 
 def generate_portfolio(universe: Universe, buying_power: float, user_id: int):
-    algorithm = NSGAII(OptPortfolio(universe,buying_power))
+    problem = OptPortfolio(universe,buying_power)
+    algorithm = NSGAII(problem)
     algorithm.run(1000)
 
     feasible_solutions = [s for s in algorithm.result if s.feasible]
 
-    sol = feasible_solutions[0]
+    sol = [problem.typeInt.decode(i) for i in feasible_solutions[0].variables]
+
+    print(sol)
 
     alloc = {}
-    for i in range(universe.count):
-        alloc[universe.universe_set[i].ticker] = sol.variables[i]
+    assets = []
+    for i, asset in enumerate(universe.universe_set):
+        if (sol[i] == 1):
+            alloc[asset.ticker] = 0.1
+            assets.append(asset)
 
     print(alloc)
 
-    portf = Portfolio(user_id=user_id,buying_power=buying_power*(1-sum(sol.variables)),assets=universe.universe_set,asset_alloc=alloc)
+    portf = Portfolio(user_id=user_id,buying_power=buying_power,assets=assets,asset_alloc=alloc)
 
     return portf

@@ -4,8 +4,8 @@ import ta
 import os
 from Library.DataClass import *
 
-VOLATILITY_THRESHOLD = 0.25
-ADX_THRESHOLD = 25
+VOLATILITY_THRESHOLD = 0.20
+ADX_THRESHOLD = 10
 
 def calc_volatility(asset: Asset, num_days: int = 252):
     path = os.path.abspath('./Stock_Data')+'/'+asset.ticker+'.csv'

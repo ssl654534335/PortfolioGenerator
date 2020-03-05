@@ -28,12 +28,12 @@ import os
 #print(df)
 
 ####  for testing genetic algorithm  ####
-#universe = ReadUniverse()
-#print(universe.count)
-#filtered_universe = filter_universe(universe)
-#print(filtered_universe.universe_set)
-#portf = generate_portfolio(filtered_universe, 10000, 1)
-#print(portf)
+universe = ReadUniverse()
+print(universe.count)
+filtered_universe = filter_universe(universe)
+print(filtered_universe.count)
+portf = generate_portfolio(filtered_universe, 10000, 1)
+print(portf)
 
 ### for testing RabbitMQ ####
 #rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
