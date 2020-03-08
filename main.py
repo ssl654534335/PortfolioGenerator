@@ -16,9 +16,10 @@ import os
 #data = gen_universe_hist_data([AKM,CSRA,MCHP,NKTR],"Adj. Close")
 
 #####  for testing genetic algorithm fitness function  #####
-#n= np.random.dirichlet(np.ones(4),size=20)
+#n= np.random.randint(2, size=(20,4))
 #for i in n:
-#   print(gen_fitness_value(i, data))
+#    print(i)
+#    print(gen_fitness_value(i, data))
 
 ####   for testing monte carlo simulations  #####
 #period = 10  # in days
@@ -28,19 +29,19 @@ import os
 #print(df)
 
 ####  for testing genetic algorithm  ####
-universe = ReadUniverse()
-print(universe.count)
-filtered_universe = filter_universe(universe)
-print(filtered_universe.count)
-portf = generate_portfolio(filtered_universe, 10000, 1)
-print(portf)
+#universe = ReadUniverse()
+#print(universe.count)
+#filtered_universe = filter_universe(universe)
+#print(universe.count)
+#portf = generate_portfolio(filtered_universe, 10000, 1)
+#print(portf)
 
 ### for testing RabbitMQ ####
-#rabbitmq = rabbitMqProducer('UserDB-PortfGen', "localhost", "UserDB-PortfGen","")
-#h1 = UDMHolding('Nektar Therapeutics','NKTR', '',100)
-#h2 = UDMHolding('Microchip Technology','MCHP','', 234)
-#sample_portf_msg = UDMPortfolio(1, 101, True, datetime.datetime.today(), 1000, 870.40, .78,[h1,h2])
-#rabbitmq.publish(sample_portf_msg.to_json())
+# self trigger a request to Portfolio Generator
+rabbitmq = rabbitMqProducer('PortfGen', "localhost", "PortfGen","")
+pm_msg = PGMessage(PGMessageType.Generate)
+rabbitmq.publish(pm_msg.to_json())
 
-#server = rabbitMqConsumer('UserDB-PortfGen', "localhost")
-#server.startserver()
+# Portfolio generator waiting for requests
+server = rabbitMqConsumer('PortfGen', "localhost")
+server.startserver()

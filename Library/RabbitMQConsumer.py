@@ -1,8 +1,7 @@
 import pika
-import ast
+from Library.GeneratePortfolio import *
 
 class rabbitMqConsumer():
-
     def __init__(self, queue, host):
         self.host = host
         self.queue = queue
@@ -13,15 +12,10 @@ class rabbitMqConsumer():
 
     @staticmethod
     def callback(ch,method, properties, body):
-        msg = body.decode("utf-8")
-        try:
-            msg = ast.literal_eval(msg)
-            print('decoded')
-            print(type(msg))
-            print("Data Received : {}".format(msg))
-        except:
-            print(type(msg))
-            print("Data Received : {}".format(msg))
+        msg_decoded = body.decode("utf-8")
+        msg = PGMessage.from_json(msg_decoded)
+        if msg.PGMessageType == PGMessageType.Generate.value:
+            GeneratePortfs()
 
     def startserver(self):
         self._channel.basic_consume(
